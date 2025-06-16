@@ -1,5 +1,7 @@
 import { AxiosProgressEvent } from "axios";
 
+export type LoadingProps = AxiosProgressEvent;
+
 export type UploadFile = {
   signedUrl: string;
   fileUrl: string;
@@ -23,7 +25,7 @@ export type DeleteUploadResponse = {
 };
 
 export type UploadOptions = {
-  onLoad?: (e: AxiosProgressEvent) => void;
+  onLoad?: (percentage: number) => void;
   onSuccess?: () => void;
   onError?: (err: unknown) => void;
 };

@@ -1,12 +1,16 @@
 import APIClient from "@/lib/APIClient";
-import type { UploadOptions, UploadSignedResponse } from "./upload.types";
+import type {
+  UploadFile,
+  UploadOptions,
+  UploadSignedResponse,
+} from "./upload.types";
 
 export async function getSignedUrl(filename: string, fileType: string) {
-  const res = await APIClient.POST<UploadSignedResponse>({
+  const data = await APIClient.POST<UploadFile>({
     endpoint: "/upload",
     data: { filename, fileType },
   });
-  return res.data;
+  return data;
 }
 
 export async function uploadToS3(
@@ -20,7 +24,12 @@ export async function uploadToS3(
       data: file,
       config: {
         headers: { "Content-Type": file.type },
-        onUploadProgress: options?.onLoad,
+        onUploadProgress: (progressEvent) => {
+          const percent = Math.round(
+            (progressEvent.loaded / (progressEvent.total || 1)) * 100
+          );
+          options?.onLoad?.(percent); // or directly update your progress bar
+        },
       },
     });
     options?.onSuccess?.();
