@@ -34,7 +34,7 @@ export default function UploadBox() {
       {...getRootProps()}
       className="border-dashed border-2 border-gray-400 p-6 rounded-md cursor-pointer bg-black/10 text-center hover:bg-black/20 transition-colors"
     >
-      <input {...getInputProps()} />
+      <input {...getInputProps()} aria-label="Click to upload" />
       <p className="text-sm text-gray-300">
         {isDragActive
           ? "Drop the file..."

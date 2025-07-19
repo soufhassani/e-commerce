@@ -1,8 +1,7 @@
 "use client";
-import React, { ChangeEvent, useRef, useState } from "react";
+import React, { ChangeEvent, useEffect, useRef, useState } from "react";
+import { nanoid } from "nanoid";
 import { useUploadFile } from "@/features/upload/useUploadQuery";
-import simulateProgress from "@/utils/simulateProgress";
-import useLoading from "@/features/upload/hooks/useLoading";
 
 type FileState = {
   url: string;
@@ -10,14 +9,18 @@ type FileState = {
   progress: number;
 };
 
-const page = () => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [filesURL, setFileUrl] = useState<FileState[] | []>([]);
-  const [imagePreview, setImagePreview] = useState<FileState[] | []>([]);
+type UploadItem = {
+  id: string;
+  preview: string;
+  progress: number; // 0-100
+  status: "pending" | "uploading" | "done" | "error";
+  fileUrl?: string;
+};
 
-  const { loading } = useLoading();
-  const { mutateAsync: upload } = useUploadFile();
+const page = () => {
+  const [uploads, setUploads] = useState<UploadItem[]>([]);
+
+  const { mutateAsync: uploadFile } = useUploadFile();
 
   const dropRef = useRef<HTMLDivElement>(null);
 
@@ -30,59 +33,69 @@ const page = () => {
     dropRef.current?.classList.remove("border-blue-500");
   };
 
-  const handleLoading = (percentage: number) => {
-    setProgress(percentage);
+  const handleOnLoad = (percentage: number, id: string) =>
+    setUploads((prev) =>
+      prev.map((u) =>
+        u.id === id ? { ...u, progress: percentage, status: "uploading" } : u
+      )
+    );
+
+  const handleOnLoadSuccess = (id: string) => {
+    setUploads((prev) =>
+      prev.map((u) =>
+        u.id === id ? { ...u, progress: 100, status: "done" } : u
+      )
+    );
+  };
+
+  const handleOnLoadError = (id: string) => {
+    setUploads((prev) =>
+      prev.map((u) => (u.id === id ? { ...u, status: "error" } : u))
+    );
   };
 
   const handleUpload = async (
     e: React.DragEvent | ChangeEvent<HTMLInputElement>
   ) => {
     e.preventDefault();
+    const files =
+      "dataTransfer" in e
+        ? Array.from(e.dataTransfer.files ?? [])
+        : Array.from(e.currentTarget.files ?? []);
 
-    let files: File[] | null = null;
+    files.forEach(async (file) => {
+      const id = nanoid();
+      const preview = URL.createObjectURL(file);
 
-    if ("dataTransfer" in e) {
-      files = Array.from(e.dataTransfer?.files ?? []);
-    } else {
-      files = Array.from(e.currentTarget?.files ?? []);
-    }
-
-    if (!files || !files.length) return;
-
-    const { isLoading: fetching, progress, clearLoading } = loading();
-
-    setIsLoading(fetching);
-    // const cleanupFakeProgress = simulateProgress({
-    //   setProgress
-    // });
-
-    for (const file of files) {
-      const url = URL.createObjectURL(file);
-      setImagePreview((state) => [
-        ...state,
-        {
-          url: url,
-          progress: progress,
-          index: files.indexOf(file),
-        },
+      setUploads((prev) => [
+        ...prev,
+        { id, preview, progress: 0, status: "pending" },
       ]);
 
       try {
-        const data = await upload({
-          file: file,
-          options: { onLoad: handleLoading },
+        const fileUrl = await uploadFile({
+          file,
+          options: {
+            onLoad: (percentage) => handleOnLoad(percentage, id),
+            onSuccess: () => handleOnLoadSuccess(id),
+            onError: () => handleOnLoadError(id),
+          },
         });
-        console.log(data);
-        // setFileUrl([filesURL]);
-      } catch (error) {
-        console.log(error);
-        setImagePreview([]);
+
+        // 3️⃣  store the final public URL if you need it later
+        setUploads((prev) =>
+          prev.map((u) => (u.id === id ? { ...u, fileUrl } : u))
+        );
+      } catch (_) {
+        console.log("error: ", _);
       }
-    }
-    clearLoading();
-    // cleanupFakeProgress();
-    // setLoading(false);
+    });
   };
+
+  useEffect(
+    () => () => uploads.forEach((u) => URL.revokeObjectURL(u.preview)),
+    [uploads]
+  );
 
   return (
     <div className="space-y-4">
@@ -122,39 +135,57 @@ const page = () => {
             type="file"
             className="opacity-0 cursor-pointer appearance-none absolute top-0 left-0 w-full h-full"
             multiple
+            aria-label="Click to upload"
           />
         </div>
       </div>
 
-      {progress && (
-        <div className="w-full bg-gray-200 rounded-full h-2.5">
-          <div
-            className="bg-blue-600 h-2.5 rounded-full"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-      )}
       <div className="asdasdas">
-        {imagePreview.length > 0 && (
-          <div className="pt-4">
-            {/* <p className="text-green-600">✅ Upload complete</p> */}
-            {imagePreview.map((fileURL) => (
-              <div key={fileURL.index} className="relative">
-                <img
-                  src={fileURL.url as string}
-                  alt="Uploaded"
-                  className="w-40 mt-2 rounded"
-                />
-                <div className="w-full bg-gray-200 rounded-full h-2.5">
-                  <div
-                    className="bg-blue-600 h-2.5 rounded-full"
-                    style={{ width: `${fileURL.progress}%` }}
-                  />
-                </div>
-              </div>
-            ))}
+        {uploads.map((u) => (
+          <div key={u.id} className="w-40 mb-4">
+            <img src={u.preview} alt="" className="rounded" />
+            <div className="h-2 bg-gray-300 rounded-full mt-1">
+              <div
+                role="progressbar"
+                aria-label={u.preview.split("/").pop()}
+                aria-valuenow={u.progress}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                className="h-2 bg-blue-600 rounded-full transition-all"
+                style={{ width: `${u.progress}%` }}
+              />
+            </div>
+
+            {u.status === "error" && (
+              <span className="text-xs text-red-600">upload failed</span>
+            )}
           </div>
-        )}
+        ))}
+
+        {/* {imagePreview.length > 0 && (
+          <div className="pt-4">
+            {/* <p className="text-green-600">✅ Upload complete</p> 
+            {imagePreview.map((fileURL) => {
+              console.log("fileURL.progress: ", fileURL.progress);
+              return (
+                <div key={fileURL.index} className="relative">
+                  <img
+                    src={fileURL.url as string}
+                    alt="Uploaded"
+                    className="w-40 mt-2 rounded"
+                  />
+                  <div className="w-full bg-gray-200 rounded-full h-2.5">
+                    <div
+                      className="bg-blue-600 h-2.5 rounded-full"
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )} 
+        */}
       </div>
     </div>
   );
