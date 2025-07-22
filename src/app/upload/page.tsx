@@ -1,19 +1,17 @@
 "use client";
 import React, { ChangeEvent, useEffect, useRef, useState } from "react";
+import { FaCheck } from "react-icons/fa6";
 import { nanoid } from "nanoid";
 import { useUploadFile } from "@/features/upload/useUploadQuery";
-
-type FileState = {
-  url: string;
-  index: number;
-  progress: number;
-};
 
 type UploadItem = {
   id: string;
   preview: string;
-  progress: number; // 0-100
+  fileName: string;
+  size: number;
+  progress: number;
   status: "pending" | "uploading" | "done" | "error";
+  loaded: boolean;
   fileUrl?: string;
 };
 
@@ -41,10 +39,14 @@ const page = () => {
     );
 
   const handleOnLoadSuccess = (id: string) => {
-    setUploads((prev) =>
-      prev.map((u) =>
-        u.id === id ? { ...u, progress: 100, status: "done" } : u
-      )
+    setTimeout(
+      () =>
+        setUploads((prev) =>
+          prev.map((u) =>
+            u.id === id ? { ...u, progress: 100, status: "done" } : u
+          )
+        ),
+      200
     );
   };
 
@@ -69,7 +71,15 @@ const page = () => {
 
       setUploads((prev) => [
         ...prev,
-        { id, preview, progress: 0, status: "pending" },
+        {
+          id,
+          preview,
+          fileName: file.name,
+          size: file.size,
+          progress: 0,
+          loaded: false,
+          status: "pending",
+        },
       ]);
 
       try {
@@ -140,20 +150,46 @@ const page = () => {
         </div>
       </div>
 
-      <div className="asdasdas">
+      <div className="grid grid-cols-5 gap-2.5">
         {uploads.map((u) => (
-          <div key={u.id} className="w-40 mb-4">
-            <img src={u.preview} alt="" className="rounded" />
-            <div className="h-2 bg-gray-300 rounded-full mt-1">
-              <div
-                role="progressbar"
-                aria-label={u.preview.split("/").pop()}
-                aria-valuenow={u.progress}
-                aria-valuemin={0}
-                aria-valuemax={100}
-                className="h-2 bg-blue-600 rounded-full transition-all"
-                style={{ width: `${u.progress}%` }}
+          <div
+            key={u.id}
+            className="relative flex flex-col gap-2.5 w-full h-full mb-4 p-2.5 border-1 border-neutral-800 rounded-lg"
+          >
+            <div className="relative max-h-56 h-full w-full flex-1 overflow-hidden">
+              <img
+                src={u.preview}
+                alt={u.fileName}
+                className="rounded w-full h-full object-cover"
               />
+              {u.status === "done" && (
+                <div className="bg-green-600 absolute top-2.5 right-2.5 p-1.5 rounded-full">
+                  <FaCheck size={15} color="white" />
+                </div>
+              )}
+            </div>
+            <div className="p-1.5 flex flex-col justify-between gap-2.5">
+              <div className="flex justify-between gap-2.5">
+                <span className="text-xs font-medium">{u.fileName}</span>
+                <span className="text-xs text-gray-500">{`${(
+                  u.size / 1024
+                ).toFixed(2)}kb`}</span>
+              </div>
+              <div className="h-2 w-full bg-gray-300 rounded-full mt-1">
+                <div
+                  role="progressbar"
+                  aria-label={u.fileName}
+                  aria-valuenow={u.progress}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  className="h-full bg-blue-600  rounded-full transition-all"
+                  style={{
+                    width: `${u.progress}%`,
+                    backgroundColor:
+                      u.status === "done" ? "oklch(62.7% 0.194 149.214)" : "",
+                  }}
+                />
+              </div>
             </div>
 
             {u.status === "error" && (
@@ -161,31 +197,6 @@ const page = () => {
             )}
           </div>
         ))}
-
-        {/* {imagePreview.length > 0 && (
-          <div className="pt-4">
-            {/* <p className="text-green-600">✅ Upload complete</p> 
-            {imagePreview.map((fileURL) => {
-              console.log("fileURL.progress: ", fileURL.progress);
-              return (
-                <div key={fileURL.index} className="relative">
-                  <img
-                    src={fileURL.url as string}
-                    alt="Uploaded"
-                    className="w-40 mt-2 rounded"
-                  />
-                  <div className="w-full bg-gray-200 rounded-full h-2.5">
-                    <div
-                      className="bg-blue-600 h-2.5 rounded-full"
-                      style={{ width: `${progress}%` }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )} 
-        */}
       </div>
     </div>
   );
