@@ -1,0 +1,63 @@
+version: "3.9"
+
+services:
+  nextjs:
+    build:
+      context: ./e-commerce
+      dockerfile: Dockerfile.dev
+    container_name: e-commerce_dev
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./e-commerce:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+    depends_on:
+      - db
+      - whisper
+
+  whisper:
+    build:
+      context: ./whisper
+      dockerfile: Dockerfile
+    container_name: whisper_dev
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./whisper:/app
+    environment:
+      - WHISPER_MODEL=${WHISPER_MODEL}
+
+  db:
+    image: postgres:15-alpine
+    container_name: postgres_dev
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  caddy:
+    image: caddy:2
+    container_name: caddy_dev
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - nextjs
+      - whisper
+
+volumes:
+  postgres_data:
+  caddy_data:
+  caddy_config:
