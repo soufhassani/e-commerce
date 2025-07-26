@@ -16,7 +16,7 @@ services:
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
     depends_on:
       - db
-      - whisper
+      # - whisper
 
   whisper:
     build:
@@ -28,7 +28,7 @@ services:
     volumes:
       - ./whisper:/app
     environment:
-      - WHISPER_MODEL=${WHISPER_MODEL}
+      - WHISPER_MODEL=base
 
   db:
     image: postgres:15-alpine
@@ -43,19 +43,19 @@ services:
     ports:
       - "5432:5432"
 
-  caddy:
-    image: caddy:2
-    container_name: caddy_dev
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./caddy/Caddyfile:/etc/caddy/Caddyfile
-      - caddy_data:/data
-      - caddy_config:/config
-    depends_on:
-      - nextjs
-      - whisper
+  # caddy:
+  #   image: caddy:2
+  #   container_name: caddy_dev
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   volumes:
+  #     - ./caddy/Caddyfile:/etc/caddy/Caddyfile
+  #     - caddy_data:/data
+  #     - caddy_config:/config
+  #   depends_on:
+  #     - nextjs
+  #     - whisper
 
 volumes:
   postgres_data:

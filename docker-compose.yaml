@@ -23,7 +23,7 @@ services:
     expose:
       - "5000"
     environment:
-      - WHISPER_MODEL=${WHISPER_MODEL}
+      - WHISPER_MODEL=base
 
   db:
     image: postgres:15-alpine
