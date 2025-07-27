@@ -1,16 +1,16 @@
-FROM node:18.20.4-alpine
+FROM node:18-alpine
 
 WORKDIR /app
 
-# Install dependencies
-COPY package.json package-lock.json ./
-RUN npm ci
+# Install dependencies (cached)
+COPY package*.json ./
+RUN npm install
 
-# Copy all source files
+# Copy rest of the code
 COPY . .
 
-# Expose port
+# Expose Next.js dev port
 EXPOSE 3000
 
-# Start in development mode (hot reload)
+# Run Next.js in development mode
 CMD ["npm", "run", "dev"]

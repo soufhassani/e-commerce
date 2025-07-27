@@ -1,3 +1,4 @@
 {
-  "/page": "app/page.js"
+  "/api/whisper/route": "app/api/whisper/route.js",
+  "/api/whisper/temp/[id]/route": "app/api/whisper/temp/[id]/route.js"
 }

@@ -1,0 +1,17 @@
+version: "3.9"
+
+services:
+  nextjs:
+    build:
+      context: ./e-commerce
+      dockerfile: Dockerfile.dev
+    command: npm run dev
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./e-commerce:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
