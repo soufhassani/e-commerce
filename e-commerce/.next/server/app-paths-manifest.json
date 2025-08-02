@@ -1,4 +1,5 @@
 {
-  "/api/whisper/route": "app/api/whisper/route.js",
-  "/api/whisper/temp/[id]/route": "app/api/whisper/temp/[id]/route.js"
+  "/favicon.ico/route": "app/favicon.ico/route.js",
+  "/page": "app/page.js",
+  "/record/page": "app/record/page.js"
 }

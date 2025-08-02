@@ -24,3 +24,7 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+.drawerControllerIcon {
+  @apply flex p-1.5 w-fit rounded-full transition-colors hover:bg-neutral-700;
+}
