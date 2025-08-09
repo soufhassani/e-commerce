@@ -26,5 +26,5 @@ body {
 }
 
 .drawerControllerIcon {
-  @apply flex p-1.5 w-fit rounded-full transition-colors hover:bg-neutral-700;
+  @apply flex p-1.5 w-fit rounded-full bg-neutral-700 transition-colors hover:scale-110 transition-transform;
 }

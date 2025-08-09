@@ -19,6 +19,7 @@ const DrawerRecorde = ({ stream }: Props) => {
 
   const [recorder, setRecorder] = useState<MediaRecorder | null>(null);
   const [recording, setRecording] = useState(false);
+  const [controls, setControls] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [seconds, setSeconds] = useState(0);
 
@@ -50,51 +51,62 @@ const DrawerRecorde = ({ stream }: Props) => {
       }
       const blob = new Blob(chunksRef.current, { type: "audio/wav" });
       const url = URL.createObjectURL(blob);
-      console.log("🔊 Recording URL:", url);
       setAudioUrl(url); // store it
       chunksRef.current = []; // clear
+      setRecording(false);
+      setControls(true);
+      setSeconds(RECORDING_TIME);
     };
   }, [stream]);
 
   //   console.log("recorder: ", recorder);
 
+  const handleStopRecording = () => {
+    if (!recorder) return;
+
+    recorder.stop();
+  };
+
   const handleRecording = () => {
     if (!recorder) return;
 
-    if (!recording) {
-      recorder.start();
-      setRecording(true);
-      //   if (recordRef.current) {
-      //     recordRef.current.style.background = "red";
-      //     recordRef.current.style.color = "black";
-      //   }
-
-      console.log("🔴 Recording started");
-      startTimeRef.current = Date.now();
-
-      timerRef.current = setInterval(() => {
-        const elapsed = (Date.now() - (startTimeRef.current ?? 0)) / 1000;
-        if (elapsed >= RECORDING_TIME) {
-          recorder.stop();
-          clearInterval(timerRef.current!);
-          timerRef.current = null;
-          setRecording(false);
-          setSeconds(RECORDING_TIME);
-          return;
-        }
-        setSeconds(elapsed);
-      }, 100);
-
-      //   setTimeout(() => {
-      //     recorder.stop();
-      //     setRecording(false);
-      //     console.log("⏹️ Recording stopped");
-      //     if (timerRef.current) {
-      //       clearInterval(timerRef.current);
-      //       timerRef.current = null;
-      //     }
-      //   }, RECORDING_TIME * 1000);
+    if (recording) {
+      handleStopRecording();
+      return;
     }
+    setControls(false);
+    recorder.start();
+    setRecording(true);
+    //   if (recordRef.current) {
+    //     recordRef.current.style.background = "red";
+    //     recordRef.current.style.color = "black";
+    //   }
+
+    console.log("🔴 Recording started");
+    startTimeRef.current = Date.now();
+
+    timerRef.current = setInterval(() => {
+      const elapsed = (Date.now() - (startTimeRef.current ?? 0)) / 1000;
+      if (elapsed >= RECORDING_TIME) {
+        recorder.stop();
+        clearInterval(timerRef.current!);
+        timerRef.current = null;
+        setRecording(false);
+        setSeconds(RECORDING_TIME);
+        return;
+      }
+      setSeconds(elapsed);
+    }, 100);
+
+    //   setTimeout(() => {
+    //     recorder.stop();
+    //     setRecording(false);
+    //     console.log("⏹️ Recording stopped");
+    //     if (timerRef.current) {
+    //       clearInterval(timerRef.current);
+    //       timerRef.current = null;
+    //     }
+    //   }, RECORDING_TIME * 1000);
 
     // if (!stream) return;
   };
@@ -117,7 +129,7 @@ const DrawerRecorde = ({ stream }: Props) => {
       </DrawerHeader>
 
       <div>
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-5">
           <div
             ref={recordRef}
             onClick={handleRecording}
@@ -132,25 +144,41 @@ const DrawerRecorde = ({ stream }: Props) => {
             />
           </div>
           <div className="w-full h-full">
-            <div className="w-full h-full bg-neutral-800 rounded-full text-white">
-              <div
-                className={`w-0 h-1 bg-white transition-all ease-linear duration-100`}
-                style={{
-                  width: `${Math.min((seconds / RECORDING_TIME) * 100, 100)}%`,
-                }}
-              />
+            <div className="w-full h-full flex items-center gap-4">
+              <div className="w-full h-full bg-neutral-800 rounded-full text-white">
+                <div
+                  className={`w-0 h-2.5 rounded-4xl bg-white transition-all ease-linear duration-100`}
+                  style={{
+                    width: `${Math.min(
+                      (seconds / RECORDING_TIME) * 100,
+                      100
+                    )}%`,
+                  }}
+                />
+              </div>
+              <div className="basis-1/4">
+                {!controls ? (
+                  <span>{`${Math.floor(seconds)} second${
+                    seconds >= 2 ? "s" : ""
+                  }`}</span>
+                ) : (
+                  <div className="flex gap-1">
+                    <div
+                      className="drawerControllerIcon !bg-transparent hover:!bg-neutral-700 hover:!scale-100"
+                      onClick={handleCancelRecording}
+                    >
+                      <IoClose />
+                    </div>
+                    <div
+                      className="drawerControllerIcon !bg-transparent hover:!bg-neutral-700 hover:!scale-100"
+                      onClick={handleSendRecording}
+                    >
+                      <IoCheckmarkSharp />
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
-            <span>{`${Math.floor(seconds)} second${
-              seconds >= 2 ? "s" : ""
-            }`}</span>
-          </div>
-        </div>
-        <div>
-          <div className="drawerControllerIcon" onClick={handleCancelRecording}>
-            <IoClose />
-          </div>
-          <div className="drawerControllerIcon" onClick={handleSendRecording}>
-            <IoCheckmarkSharp />
           </div>
         </div>
       </div>
