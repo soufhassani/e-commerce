@@ -1,22 +1,25 @@
+"use client";
+
 import {
   Drawer,
+  DrawerContent,
   DrawerDescription,
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
 import React, { useEffect, useRef, useState } from "react";
 import { BsFillRecordFill } from "react-icons/bs";
+import { FaPause } from "react-icons/fa6";
 import { IoCheckmarkSharp, IoClose } from "react-icons/io5";
 
 type Props = {
   stream: MediaStream | null;
+  isOpen: boolean;
 };
 
 const RECORDING_TIME = 5;
 
-const DrawerRecorde = ({ stream }: Props) => {
-  if (!stream) return;
-
+const DrawerRecorde = ({ isOpen, stream }: Props) => {
   const [recorder, setRecorder] = useState<MediaRecorder | null>(null);
   const [recording, setRecording] = useState(false);
   const [controls, setControls] = useState(false);
@@ -120,75 +123,85 @@ const DrawerRecorde = ({ stream }: Props) => {
   };
 
   return (
-    <Drawer>
-      <DrawerHeader>
-        <DrawerTitle>Start Recording</DrawerTitle>
-        <DrawerDescription>
-          You can look for the product you need using you voice only.
-        </DrawerDescription>
-      </DrawerHeader>
+    <Drawer open={isOpen}>
+      <DrawerContent
+        className="
+          data-[state=open]:animate-in
+          data-[state=open]:border-neutral-700
+          data-[state=closed]:animate-out
+          data-[state=open]:fade-in-0
+          data-[state=closed]:fade-out-0
+          data-[state=open]:slide-in-from-bottom-1/3
+          data-[state=closed]:slide-out-to-bottom-1/3
+        "
+      >
+        <DrawerHeader>
+          <DrawerTitle>Start Recording</DrawerTitle>
+          <DrawerDescription>
+            You can look for the product you need using you voice only.
+          </DrawerDescription>
+        </DrawerHeader>
 
-      <div>
-        <div className="flex items-center justify-between gap-5">
-          <div
-            ref={recordRef}
-            onClick={handleRecording}
-            className={`${
-              recording
-                ? "bg-red-500 flex p-1.5 w-fit rounded-full"
-                : "drawerControllerIcon"
-            } `}
-          >
-            <BsFillRecordFill
-              className={recording ? "animate-pulse duration-[50ms]" : ""}
-            />
-          </div>
-          <div className="w-full h-full">
-            <div className="w-full h-full flex items-center gap-4">
-              <div className="w-full h-full bg-neutral-800 rounded-full text-white">
-                <div
-                  className={`w-0 h-2.5 rounded-4xl bg-white transition-all ease-linear duration-100`}
-                  style={{
-                    width: `${Math.min(
-                      (seconds / RECORDING_TIME) * 100,
-                      100
-                    )}%`,
-                  }}
-                />
-              </div>
-              <div className="basis-1/4">
-                {!controls ? (
-                  <span>{`${Math.floor(seconds)} second${
-                    seconds >= 2 ? "s" : ""
-                  }`}</span>
-                ) : (
-                  <div className="flex gap-1">
-                    <div
-                      className="drawerControllerIcon !bg-transparent hover:!bg-neutral-700 hover:!scale-100"
-                      onClick={handleCancelRecording}
-                    >
-                      <IoClose />
+        <div className="flex items-center justify-center pb-8">
+          <div className="flex items-center justify-between gap-5 min-w-xl">
+            <div
+              ref={recordRef}
+              onClick={handleRecording}
+              className={`${
+                recording
+                  ? "bg-red-500 flex p-1.5 w-fit rounded-full"
+                  : "drawerControllerIcon"
+              } `}
+            >
+              {recording ? (
+                <FaPause className="animate-pulse duration-[50ms]" />
+              ) : (
+                <BsFillRecordFill />
+              )}
+            </div>
+            <div className="w-full h-full">
+              <div className="w-full h-full flex items-center gap-4">
+                <div className="w-full h-full bg-neutral-800 rounded-full text-white">
+                  <div
+                    className={`w-0 h-2.5 rounded-4xl bg-white transition-all ease-linear duration-100`}
+                    style={{
+                      width: `${Math.min(
+                        (seconds / RECORDING_TIME) * 100,
+                        100
+                      )}%`,
+                    }}
+                  />
+                </div>
+                <div className="w-fit">
+                  {!controls ? (
+                    <span className="whitespace-nowrap">{`00:${
+                      seconds > 9
+                        ? Math.floor(seconds)
+                        : `0${Math.floor(seconds)}`
+                    }`}</span>
+                  ) : (
+                    <div className="flex gap-1">
+                      <div
+                        className="drawerControllerIcon !bg-transparent hover:!bg-neutral-700 hover:!scale-100"
+                        onClick={handleSendRecording}
+                      >
+                        <IoCheckmarkSharp />
+                      </div>
                     </div>
-                    <div
-                      className="drawerControllerIcon !bg-transparent hover:!bg-neutral-700 hover:!scale-100"
-                      onClick={handleSendRecording}
-                    >
-                      <IoCheckmarkSharp />
-                    </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {audioUrl && (
-        <div className="mt-4">
-          <p>📣 Your Recording:</p>
-          <audio controls src={audioUrl}></audio>
-        </div>
-      )}
+        {audioUrl && (
+          <div className="mt-4">
+            <p>📣 Your Recording:</p>
+            <audio controls src={audioUrl}></audio>
+          </div>
+        )}
+      </DrawerContent>
     </Drawer>
   );
 };

@@ -52,7 +52,7 @@ const page = () => {
         <div className="w-full flex items-center justify-center">
           <BiSolidMicrophone onClick={handleStartRecord} />
         </div>
-        {openDrawer && <DrawerRecorde stream={stream} />}
+        <DrawerRecorde isOpen={openDrawer} stream={stream} />
       </div>
     </div>
   );
