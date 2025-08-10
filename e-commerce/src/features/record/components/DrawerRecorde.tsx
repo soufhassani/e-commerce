@@ -28,6 +28,7 @@ const DrawerRecorde = ({ isOpen, stream }: Props) => {
 
   //   const [recordState, setRecorderState] = useState(recorder.state);
   const recordRef = useRef<HTMLDivElement>(null);
+  const audioBlop = useRef<Blob>(null);
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef<number | null>(null);
@@ -52,8 +53,8 @@ const DrawerRecorde = ({ isOpen, stream }: Props) => {
         clearInterval(timerRef.current);
         timerRef.current = null;
       }
-      const blob = new Blob(chunksRef.current, { type: "audio/wav" });
-      const url = URL.createObjectURL(blob);
+      audioBlop.current = new Blob(chunksRef.current, { type: "audio/wav" });
+      const url = URL.createObjectURL(audioBlop.current);
       setAudioUrl(url); // store it
       chunksRef.current = []; // clear
       setRecording(false);
@@ -66,7 +67,6 @@ const DrawerRecorde = ({ isOpen, stream }: Props) => {
 
   const handleStopRecording = () => {
     if (!recorder) return;
-
     recorder.stop();
   };
 
@@ -77,13 +77,13 @@ const DrawerRecorde = ({ isOpen, stream }: Props) => {
       handleStopRecording();
       return;
     }
+
+    // Paused here need to clear the blop
+    if (audioBlop.current) audioBlop.current;
+
     setControls(false);
     recorder.start();
     setRecording(true);
-    //   if (recordRef.current) {
-    //     recordRef.current.style.background = "red";
-    //     recordRef.current.style.color = "black";
-    //   }
 
     console.log("🔴 Recording started");
     startTimeRef.current = Date.now();
@@ -100,18 +100,6 @@ const DrawerRecorde = ({ isOpen, stream }: Props) => {
       }
       setSeconds(elapsed);
     }, 100);
-
-    //   setTimeout(() => {
-    //     recorder.stop();
-    //     setRecording(false);
-    //     console.log("⏹️ Recording stopped");
-    //     if (timerRef.current) {
-    //       clearInterval(timerRef.current);
-    //       timerRef.current = null;
-    //     }
-    //   }, RECORDING_TIME * 1000);
-
-    // if (!stream) return;
   };
 
   const handleCancelRecording = () => {
