@@ -2,24 +2,33 @@
 
 import {
   Drawer,
+  DrawerClose,
   DrawerContent,
   DrawerDescription,
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
-import React, { useEffect, useRef, useState } from "react";
+import React, {
+  Dispatch,
+  SetStateAction,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { BsFillRecordFill } from "react-icons/bs";
 import { FaPause } from "react-icons/fa6";
-import { IoCheckmarkSharp, IoClose } from "react-icons/io5";
+import { IoCheckmarkSharp, IoCloseCircle } from "react-icons/io5";
 
 type Props = {
   stream: MediaStream | null;
+  setStream: Dispatch<SetStateAction<MediaStream | null>>;
   isOpen: boolean;
+  setIsOpen: Dispatch<SetStateAction<boolean>>;
 };
 
 const RECORDING_TIME = 5;
 
-const DrawerRecorde = ({ isOpen, stream }: Props) => {
+const DrawerRecorde = ({ isOpen, setIsOpen, stream, setStream }: Props) => {
   const [recorder, setRecorder] = useState<MediaRecorder | null>(null);
   const [recording, setRecording] = useState(false);
   const [controls, setControls] = useState(false);
@@ -110,6 +119,13 @@ const DrawerRecorde = ({ isOpen, stream }: Props) => {
     console.log("record was sent");
   };
 
+  const handleCloseDrawer = () => {
+    setIsOpen(false);
+    recorder?.stop();
+    stream?.getTracks().forEach((track) => track.stop());
+    setStream(null);
+  };
+
   return (
     <Drawer open={isOpen}>
       <DrawerContent
@@ -124,6 +140,18 @@ const DrawerRecorde = ({ isOpen, stream }: Props) => {
         "
       >
         <DrawerHeader>
+          <DrawerClose
+            asChild
+            onClick={handleCloseDrawer}
+            className="absolute top-5 right-5"
+          >
+            <div aria-label="close-icon">
+              <IoCloseCircle
+                size={30}
+                className="text-neutral-700 cursor-pointer hover:scale-110 "
+              />
+            </div>
+          </DrawerClose>
           <DrawerTitle>Start Recording</DrawerTitle>
           <DrawerDescription>
             You can look for the product you need using you voice only.

@@ -23,16 +23,15 @@ const page = () => {
         new Error("MediaDevices API not supported in this browser.")
       );
     // if (stream) return;
-
     try {
       const mediaStream = await navigator.mediaDevices.getUserMedia({
         audio: true,
       });
 
-      const mediaRecorder = new MediaRecorder(mediaStream);
+      // const mediaRecorder = new MediaRecorder(mediaStream);
       //   if(!mediaStream) return;
       setStream(mediaStream);
-      setRecorder(mediaRecorder);
+      // setRecorder(mediaRecorder);
       setOpenDrawer(true);
     } catch (err) {
       console.error("Error accessing media devices:", err);
@@ -52,7 +51,12 @@ const page = () => {
         <div className="w-full flex items-center justify-center">
           <BiSolidMicrophone onClick={handleStartRecord} />
         </div>
-        <DrawerRecorde isOpen={openDrawer} stream={stream} />
+        <DrawerRecorde
+          isOpen={openDrawer}
+          setIsOpen={setOpenDrawer}
+          stream={stream}
+          setStream={setStream}
+        />
       </div>
     </div>
   );
